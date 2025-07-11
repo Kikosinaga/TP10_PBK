@@ -1,6 +1,8 @@
 <template>
   <div>
-    <p>Logging out...</p>
+    <p>Apakah Anda yakin ingin logout?</p>
+    <button @click="confirmLogout">Ya, Logout</button>
+    <button @click="batal">Batal</button>
   </div>
 </template>
 
@@ -11,9 +13,13 @@ import { auth } from '../store/auth'
 
 const router = useRouter()
 
-onMounted(() => {
+function confirmLogout() {
   auth.isLoggedIn = false
   auth.role = null
+  auth.logout()
   router.push('/login')
-})
+}
+function batal() {
+  router.back()
+}
 </script>
