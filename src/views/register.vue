@@ -1,25 +1,25 @@
 <template>
-  <div class="login-container">
-    <h2>Login</h2>
+  <div class="register-container">
+    <h2>Daftar Akun</h2>
     <Alert v-if="alert.show" :type="alert.type" :message="alert.message" @close="alert.show = false" />
-    <input v-model="username" placeholder="Username" class="login-input" />
-    <input v-model="password" type="password" placeholder="Password" class="login-input" />
-    <button @click="login" class="login-button">Login</button>
-    <p v-if="error" style="color:red">{{ error }}</p>
-    <router-link to="/register" class="register-link">Belum punya akun? Daftar di sini</router-link>
+    <input v-model="username" placeholder="Username" class="register-input" />
+    <input v-model="password" type="password" placeholder="Password" class="register-input" />
+    <button @click="register" class="register-button">Daftar</button>
+    <p v-if="error" class="error">{{ error }}</p>
+    <router-link to="/login" class="login-link">Sudah punya akun? Login di sini</router-link>
   </div>
 </template>
 
 <script setup>
 import { ref } from 'vue'
+import axios from 'axios'
 import { useRouter } from 'vue-router'
-import { auth } from '../store/auth'
 import Alert from '../components/Alert.vue'
 
 const username = ref('')
 const password = ref('')
-const router = useRouter()
 const error = ref('')
+const router = useRouter()
 const alert = ref({ show: false, type: '', message: '' })
 
 function showAlert(type, message) {
@@ -27,23 +27,34 @@ function showAlert(type, message) {
   setTimeout(() => { alert.value.show = false }, 2500)
 }
 
-async function login() {
+async function register() {
   error.value = ''
-  const ok = await auth.login(username.value, password.value)
-  if (ok) {
-    showAlert('success', 'Login berhasil!')
-    setTimeout(() => {
-      if (auth.role === 'admin') router.push('/admin')
-      else router.push('/uts')
-    }, 1200)
-  } else {
-    error.value = 'Login gagal, cek username/password.'
+  if (!username.value || !password.value) {
+    error.value = 'Username dan password wajib diisi.'
+    return
+  }
+  try {
+    // Cek username sudah ada
+    const cek = await axios.get('http://localhost:3000/users?username=' + username.value)
+    if (cek.data.length > 0) {
+      error.value = 'Username sudah terdaftar.'
+      return
+    }
+    await axios.post('http://localhost:3000/users', {
+      username: username.value,
+      password: password.value,
+      role: 'user'
+    })
+    showAlert('success', 'Akun berhasil dibuat! Silakan login.')
+    setTimeout(() => router.push('/login'), 2000)
+  } catch (e) {
+    error.value = 'Gagal mendaftar.'
   }
 }
 </script>
 
 <style scoped>
-.login-container {
+.register-container {
   max-width: 360px;
   margin: 5rem auto;
   padding: 2rem;
@@ -55,14 +66,14 @@ async function login() {
   color: #424242; 
 }
 
-.login-container h2 {
+.register-container h2 {
   margin-bottom: 1.5rem;
   color: #880E4F; 
   font-weight: 700;
   font-size: 2rem;
 }
 
-.login-input {
+.register-input {
   width: calc(90% - 4px);
   padding: 0.75rem 1rem;
   margin-bottom: 1rem;
@@ -73,13 +84,12 @@ async function login() {
   transition: border-color 0.3s ease;
   color: #424242; 
 }
-
-.login-input:focus {
+.register-input:focus {
   border-color: #EC407A; 
-  box-shadow: 0 0 8px rgba(236, 64, 122, 0.5); 
+  box-shadow: 0 0 8px rgba(236, 64, 122, 0.5);
 }
 
-.login-button {
+.register-button {
   width: 100%;
   padding: 0.75rem 1rem;
   background-color: #EC407A; 
@@ -91,12 +101,13 @@ async function login() {
   cursor: pointer;
   transition: background-color 0.3s ease;
 }
-
-.login-button:hover {
+.register-button:hover {
   background-color: #D81B60; 
 }
-
-.register-link {
+.error { 
+  color: #DC143C; 
+}
+.login-link {
   display: block;
   margin-top: 1.5rem;
   color: #EC407A; 
@@ -104,12 +115,7 @@ async function login() {
   text-decoration: underline;
   cursor: pointer;
 }
-
-.register-link:hover {
+.login-link:hover {
   color: #D81B60; 
-}
-
-.login-container p[style="color:red"] {
-  color: #DC143C !important;
 }
 </style>

@@ -9,4 +9,3 @@
 <script setup>
 // Script kosong juga tidak apa-apa sementara
 </script>
-
